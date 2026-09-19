@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { isAuthorized } from "../lib/auth"
-import { getSql } from "../lib/db"
+import { isAuthorized } from "../lib/auth.js"
+import { getSql } from "../lib/db.js"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
 	if (!isAuthorized(req.headers.authorization)) {
