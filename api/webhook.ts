@@ -43,7 +43,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 			xRequestId,
 			dataId,
 			secret,
-			toleranceSeconds: 300,
 		})
 	} catch (e) {
 		if (e instanceof InvalidWebhookSignatureError) {
