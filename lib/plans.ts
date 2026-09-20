@@ -13,19 +13,19 @@ export const PLANS: Record<string, Plan> = {
 	"por-informe": {
 		id: "por-informe",
 		title: "Por Informe",
-		price: 18000,
+		price: 18,
 		credits: 1,
 	},
 	mensual: {
 		id: "mensual",
 		title: "Mensual",
-		price: 55000,
+		price: 55,
 		credits: 7,
 	},
 	anual: {
 		id: "anual",
 		title: "Anual",
-		price: 560000,
+		price: 560,
 		credits: 100,
 	},
 }
