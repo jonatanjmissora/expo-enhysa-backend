@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto"
 import type { VercelRequest } from "@vercel/node"
-import { getSql } from "./db"
+import { getSql } from "./db.js"
 
 const SESSION_DAYS = 30
 

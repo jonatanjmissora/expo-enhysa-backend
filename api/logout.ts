@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { deleteSession, getSessionToken, isAuthorized } from "../lib/auth"
-import { ensureSchema } from "../lib/db"
+import { deleteSession, getSessionToken, isAuthorized } from "../lib/auth.js"
+import { ensureSchema } from "../lib/db.js"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
 	if (req.method !== "POST") {
