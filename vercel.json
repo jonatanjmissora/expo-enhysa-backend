@@ -1,6 +1,10 @@
 {
 	"rewrites": [
 		{ "source": "/health", "destination": "/api/health" },
+		{ "source": "/register", "destination": "/api/register" },
+		{ "source": "/login", "destination": "/api/login" },
+		{ "source": "/logout", "destination": "/api/logout" },
+		{ "source": "/me", "destination": "/api/me" },
 		{ "source": "/preference", "destination": "/api/preference" },
 		{ "source": "/webhook", "destination": "/api/webhook" },
 		{ "source": "/credits", "destination": "/api/credits" }
