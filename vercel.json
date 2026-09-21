@@ -4,6 +4,7 @@
 		{ "source": "/preference", "destination": "/api/preference" },
 		{ "source": "/webhook", "destination": "/api/webhook" },
 		{ "source": "/credits", "destination": "/api/credits" },
-		{ "source": "/credit-history", "destination": "/api/credit-history" }
+		{ "source": "/credit-history", "destination": "/api/credit-history" },
+		{ "source": "/consume", "destination": "/api/consume" }
 	]
 }
