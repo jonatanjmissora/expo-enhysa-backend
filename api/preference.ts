@@ -51,9 +51,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 			external_reference: userId,
 			notification_url: notificationUrl,
 			back_urls: {
-				success: backUrl,
-				failure: backUrl,
-				pending: backUrl,
+				success: `${backUrl}?result=success`,
+				failure: `${backUrl}?result=failure`,
+				pending: `${backUrl}?result=pending`,
 			},
 			auto_return: "approved",
 			metadata: { plan_id: plan.id },
