@@ -3,6 +3,7 @@ import { isAuthorized } from "../lib/auth.js"
 import { getSql } from "../lib/db.js"
 import { getPlan } from "../lib/plans.js"
 import { createPreference, isSandbox } from "../lib/mp.js"
+import { randomUUID } from "node:crypto"
 
 type PreferenceInput = {
 	planId?: string
@@ -38,6 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 	const notificationUrl = `${process.env.BACKEND_BASE_URL}/webhook`
 
 	try {
+		const checkoutId = randomUUID()
 		const preference = await createPreference({
 			items: [
 				{
@@ -56,15 +58,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 				pending: `${backUrl}?result=pending`,
 			},
 			auto_return: "approved",
-			metadata: { plan_id: plan.id },
+			metadata: { plan_id: plan.id, checkout_id: checkoutId },
 		})
 
 		const sql = getSql()
 		await sql`
 			INSERT INTO expo_pending_payments (
-				preference_id, user_id, plan_id, status, created_at, updated_at
+				preference_id, checkout_id, user_id, plan_id, status, created_at, updated_at
 			)
-			VALUES (${preference.id}, ${userId}, ${plan.id}, 'pending', ${now()}, ${now()})
+			VALUES (${preference.id}, ${checkoutId}, ${userId}, ${plan.id}, 'pending', ${now()}, ${now()})
 		`
 
 		const initPoint = isSandbox()

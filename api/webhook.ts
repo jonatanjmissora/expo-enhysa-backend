@@ -74,6 +74,11 @@ async function processPayment(paymentId: string) {
 	const userId = payment.external_reference
 	if (!userId) return
 
+	const checkoutId =
+		typeof payment.metadata?.checkout_id === "string"
+			? payment.metadata.checkout_id
+			: null
+
 	const sql = getSql()
 	const timestamp = new Date().toISOString()
 
@@ -114,17 +119,41 @@ async function processPayment(paymentId: string) {
 				updated_at = EXCLUDED.updated_at
 		`
 
+		await markPayment(sql, checkoutId, userId, paymentId, "approved", timestamp)
+		return
+	}
+
+	await markPayment(
+		sql,
+		checkoutId,
+		userId,
+		paymentId,
+		payment.status ?? "pending",
+		timestamp
+	)
+}
+
+async function markPayment(
+	sql: ReturnType<typeof getSql>,
+	checkoutId: string | null,
+	userId: string,
+	paymentId: string,
+	status: string,
+	timestamp: string
+) {
+	if (checkoutId) {
 		await sql`
 			UPDATE expo_pending_payments
-			SET mp_payment_id = ${paymentId}, status = 'approved', updated_at = ${timestamp}
-			WHERE user_id = ${userId} AND status = 'pending'
+			SET mp_payment_id = ${paymentId}, status = ${status}, updated_at = ${timestamp}
+			WHERE checkout_id = ${checkoutId}
 		`
 		return
 	}
 
+	// Fallback legado: preferencias creadas antes de `checkout_id`.
 	await sql`
 		UPDATE expo_pending_payments
-		SET mp_payment_id = ${paymentId}, status = ${payment.status ?? "pending"}, updated_at = ${timestamp}
+		SET mp_payment_id = ${paymentId}, status = ${status}, updated_at = ${timestamp}
 		WHERE user_id = ${userId} AND status = 'pending'
 	`
 }

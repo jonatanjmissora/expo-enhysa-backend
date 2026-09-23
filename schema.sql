@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS expo_credit_history (
 -- 3. Pagos pendientes (una fila por preferencia de Checkout Pro)
 CREATE TABLE IF NOT EXISTS expo_pending_payments (
 	preference_id TEXT PRIMARY KEY,
+	checkout_id TEXT UNIQUE,
 	user_id TEXT NOT NULL,
 	plan_id TEXT NOT NULL,
 	mp_payment_id TEXT,
