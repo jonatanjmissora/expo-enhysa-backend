@@ -1,13 +1,12 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { isAuthorized } from "../lib/auth.js"
-import { getSql } from "../lib/db.js"
+import { getSessionToken, getSessionUser, isAuthorized } from "../lib/auth.js"
+import { ensureSchema, getSql } from "../lib/db.js"
 import { getPlan } from "../lib/plans.js"
 import { createPreference, isSandbox } from "../lib/mp.js"
 import { randomUUID } from "node:crypto"
 
 type PreferenceInput = {
 	planId?: string
-	userId?: string
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -21,11 +20,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 		return
 	}
 
-	const body = (req.body ?? {}) as PreferenceInput
-	const { planId, userId } = body
+	const token = getSessionToken(req)
+	if (!token) {
+		res.status(401).json({ error: "no_session" })
+		return
+	}
 
-	if (!planId || !userId) {
-		res.status(400).json({ error: "planId y userId son requeridos" })
+	const body = (req.body ?? {}) as PreferenceInput
+	const planId = typeof body.planId === "string" ? body.planId : ""
+
+	if (!planId) {
+		res.status(400).json({ error: "planId requerido" })
 		return
 	}
 
@@ -39,6 +44,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 	const notificationUrl = `${process.env.BACKEND_BASE_URL}/webhook`
 
 	try {
+		await ensureSchema()
+		const user = await getSessionUser(token)
+		if (!user) {
+			res.status(401).json({ error: "invalid_session" })
+			return
+		}
+
 		const checkoutId = randomUUID()
 		const preference = await createPreference({
 			items: [
@@ -50,7 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 					unit_price: plan.price,
 				},
 			],
-			external_reference: userId,
+			external_reference: user.id,
 			notification_url: notificationUrl,
 			back_urls: {
 				success: `${backUrl}?result=success`,
@@ -66,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 			INSERT INTO expo_pending_payments (
 				preference_id, checkout_id, user_id, plan_id, status, created_at, updated_at
 			)
-			VALUES (${preference.id}, ${checkoutId}, ${userId}, ${plan.id}, 'pending', ${now()}, ${now()})
+			VALUES (${preference.id}, ${checkoutId}, ${user.id}, ${plan.id}, 'pending', ${now()}, ${now()})
 		`
 
 		const initPoint = isSandbox()

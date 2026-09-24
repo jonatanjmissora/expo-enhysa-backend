@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { isAuthorized } from "../lib/auth.js"
-import { getSql } from "../lib/db.js"
+import { getSessionToken, getSessionUser, isAuthorized } from "../lib/auth.js"
+import { ensureSchema, getSql } from "../lib/db.js"
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
 	if (req.method !== "POST") {
@@ -13,21 +13,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 		return
 	}
 
-	const body = (req.body ?? {}) as { userId?: string; reportId?: string }
-	const { userId, reportId } = body
+	const token = getSessionToken(req)
+	if (!token) {
+		res.status(401).json({ error: "no_session" })
+		return
+	}
 
-	if (!userId || !reportId) {
-		res.status(400).json({ error: "userId y reportId son requeridos" })
+	const body = (req.body ?? {}) as { reportId?: unknown }
+	const reportId = typeof body.reportId === "string" ? body.reportId : ""
+
+	if (!reportId) {
+		res.status(400).json({ error: "reportId requerido" })
 		return
 	}
 
 	try {
+		await ensureSchema()
+		const user = await getSessionUser(token)
+		if (!user) {
+			res.status(401).json({ error: "invalid_session" })
+			return
+		}
+
 		const sql = getSql()
 		const now = new Date().toISOString()
 		const id = `consume-${reportId}`
 
 		const balanceRow = await sql`
-			SELECT credits FROM expo_user_credits WHERE user_id = ${userId}
+			SELECT credits FROM expo_user_credits WHERE user_id = ${user.id}
 		`
 		const currentCredits = (balanceRow[0]?.credits as number | undefined) ?? 0
 
@@ -40,14 +53,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 			INSERT INTO expo_credit_history (
 				id, user_id, type, credits, report_id, payment_id, created_at
 			)
-			VALUES (${id}, ${userId}, 'consume', -1, ${reportId}, NULL, ${now})
+			VALUES (${id}, ${user.id}, 'consume', -1, ${reportId}, NULL, ${now})
 			ON CONFLICT (id) DO NOTHING
 			RETURNING id
 		`
 
 		if (inserted.length === 0) {
 			const row = await sql`
-				SELECT credits FROM expo_user_credits WHERE user_id = ${userId}
+				SELECT credits FROM expo_user_credits WHERE user_id = ${user.id}
 			`
 			res.status(200).json({
 				credits: (row[0]?.credits as number | undefined) ?? 0,
@@ -59,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 		const updated = await sql`
 			UPDATE expo_user_credits
 			SET credits = credits - 1, updated_at = ${now}
-			WHERE user_id = ${userId}
+			WHERE user_id = ${user.id}
 			RETURNING credits
 		`
 
