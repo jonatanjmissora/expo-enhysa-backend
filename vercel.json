@@ -9,6 +9,8 @@
 		{ "source": "/webhook", "destination": "/api/webhook" },
 		{ "source": "/credits", "destination": "/api/credits" },
 		{ "source": "/credit-history", "destination": "/api/credit-history" },
-		{ "source": "/consume", "destination": "/api/consume" }
+		{ "source": "/consume", "destination": "/api/consume" },
+		{ "source": "/tecnicos/sync", "destination": "/api/tecnicos-sync" },
+		{ "source": "/tecnicos", "destination": "/api/tecnicos" }
 	]
 }

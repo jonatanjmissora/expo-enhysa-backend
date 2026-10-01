@@ -36,3 +36,23 @@ CREATE INDEX IF NOT EXISTS idx_expo_credit_history_user
 
 CREATE INDEX IF NOT EXISTS idx_expo_pending_payments_user_status
 	ON expo_pending_payments (user_id, status);
+
+-- 4. Técnicos (backup/sync local-first). `id` = UUID local → idempotencia.
+CREATE TABLE IF NOT EXISTS expo_tecnicos (
+	id             TEXT PRIMARY KEY,
+	user_id        UUID NOT NULL,
+	nombre         TEXT,
+	telefono       TEXT,
+	localidad      TEXT,
+	cargo          TEXT,
+	matricula      TEXT,
+	matricula_img  TEXT,
+	firma_img      TEXT,
+	empresa_logo   TEXT,
+	dni            INTEGER,
+	deleted_at     TIMESTAMPTZ,
+	updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_expo_tecnicos_user
+	ON expo_tecnicos (user_id);
