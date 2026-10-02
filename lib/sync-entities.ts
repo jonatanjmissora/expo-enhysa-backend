@@ -37,6 +37,35 @@ export const SYNC_ENTITIES: Record<string, SyncEntity> = {
 			{ camel: "dni", snake: "dni", type: "integer" },
 		],
 	},
+	empresas: {
+		table: "expo_empresas",
+		columns: [
+			{ camel: "cuit", snake: "cuit", type: "text" },
+			{ camel: "razonSocial", snake: "razon_social", type: "text" },
+			{ camel: "direccion", snake: "direccion", type: "text" },
+			{ camel: "localidad", snake: "localidad", type: "text" },
+			{ camel: "provincia", snake: "provincia", type: "text" },
+			{ camel: "codigoPostal", snake: "codigo_postal", type: "text" },
+			{ camel: "horarios", snake: "horarios", type: "text" },
+			{ camel: "logo", snake: "logo", type: "text" },
+		],
+	},
+	instrumentos: {
+		table: "expo_instrumentos",
+		columns: [
+			{ camel: "nombre", snake: "nombre", type: "text" },
+			{ camel: "marca", snake: "marca", type: "text" },
+			{ camel: "modelo", snake: "modelo", type: "text" },
+			{ camel: "serie", snake: "serie", type: "text" },
+			{ camel: "fechaCalibracion", snake: "fecha_calibracion", type: "text" },
+			{
+				camel: "imagenesCalibracion",
+				snake: "imagenes_calibracion",
+				type: "text",
+			},
+			{ camel: "imagenes", snake: "imagenes", type: "text" },
+		],
+	},
 }
 
 export function getEntity(name: string): SyncEntity | null {

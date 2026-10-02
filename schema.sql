@@ -56,3 +56,40 @@ CREATE TABLE IF NOT EXISTS expo_tecnicos (
 
 CREATE INDEX IF NOT EXISTS idx_expo_tecnicos_user
 	ON expo_tecnicos (user_id);
+
+-- 5. Empresas (backup/sync local-first).
+CREATE TABLE IF NOT EXISTS expo_empresas (
+	id             TEXT PRIMARY KEY,
+	user_id        UUID NOT NULL,
+	cuit           TEXT,
+	razon_social   TEXT,
+	direccion      TEXT,
+	localidad      TEXT,
+	provincia      TEXT,
+	codigo_postal  TEXT,
+	horarios       TEXT,
+	logo           TEXT,
+	deleted_at     TIMESTAMPTZ,
+	updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_expo_empresas_user
+	ON expo_empresas (user_id);
+
+-- 6. Instrumentos (backup/sync local-first).
+CREATE TABLE IF NOT EXISTS expo_instrumentos (
+	id                    TEXT PRIMARY KEY,
+	user_id               UUID NOT NULL,
+	nombre                TEXT,
+	marca                 TEXT,
+	modelo                TEXT,
+	serie                 TEXT,
+	fecha_calibracion     TEXT,
+	imagenes_calibracion  TEXT,
+	imagenes              TEXT,
+	deleted_at            TIMESTAMPTZ,
+	updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_expo_instrumentos_user
+	ON expo_instrumentos (user_id);
