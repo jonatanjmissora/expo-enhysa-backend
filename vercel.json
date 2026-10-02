@@ -10,10 +10,9 @@
 		{ "source": "/credits", "destination": "/api/credits" },
 		{ "source": "/credit-history", "destination": "/api/credit-history" },
 		{ "source": "/consume", "destination": "/api/consume" },
-		{ "source": "/tecnicos/sync", "destination": "/api/tecnicos-sync" },
-		{ "source": "/tecnicos", "destination": "/api/tecnicos" }
+		{ "source": "/sync/:entity", "destination": "/api/sync/:entity" }
 	],
 	"crons": [
-		{ "path": "/api/cron/purge", "schedule": "0 3 * * 1" }
+		{ "path": "/api/sync/tecnicos", "schedule": "0 3 * * 1" }
 	]
 }
