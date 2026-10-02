@@ -12,5 +12,8 @@
 		{ "source": "/consume", "destination": "/api/consume" },
 		{ "source": "/tecnicos/sync", "destination": "/api/tecnicos-sync" },
 		{ "source": "/tecnicos", "destination": "/api/tecnicos" }
+	],
+	"crons": [
+		{ "path": "/api/cron/purge", "schedule": "0 3 * * 1" }
 	]
 }

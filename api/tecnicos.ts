@@ -79,7 +79,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 			ORDER BY updated_at ASC
 		`) as TecnicoRow[]
 
-		res.status(200).json({ tecnicos: rows.map(toApi) })
+		// Tombstones: ids borrados (soft delete), para que el cliente no los
+		// resucite en el merge y pueda limpiarlos del lado local.
+		const deleted = (await sql`
+			SELECT id
+			FROM expo_tecnicos
+			WHERE user_id = ${user.id} AND deleted_at IS NOT NULL
+		`) as { id: string }[]
+
+		res.status(200).json({
+			tecnicos: rows.map(toApi),
+			deletedIds: deleted.map(row => row.id),
+		})
 	} catch (e) {
 		console.error("[tecnicos] error:", e)
 		res.status(500).json({ error: "no se pudieron obtener los técnicos" })
