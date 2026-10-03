@@ -93,3 +93,21 @@ CREATE TABLE IF NOT EXISTS expo_instrumentos (
 
 CREATE INDEX IF NOT EXISTS idx_expo_instrumentos_user
 	ON expo_instrumentos (user_id);
+
+-- 7. Imágenes (metadata de archivos en UploadThing; el binario NO vive en Neon).
+CREATE TABLE IF NOT EXISTS expo_images (
+	id          TEXT PRIMARY KEY,          -- = imageId (UUID local)
+	user_id     UUID NOT NULL,
+	filename    TEXT,
+	mime_type   TEXT,
+	width       INTEGER,
+	height      INTEGER,
+	size        INTEGER,
+	remote_key  TEXT,                      -- fileKey de UploadThing
+	remote_url  TEXT,                      -- ufsUrl
+	deleted_at  TIMESTAMPTZ,
+	updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_expo_images_user
+	ON expo_images (user_id);

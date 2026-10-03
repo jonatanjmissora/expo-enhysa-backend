@@ -66,6 +66,18 @@ export const SYNC_ENTITIES: Record<string, SyncEntity> = {
 			{ camel: "imagenes", snake: "imagenes", type: "text" },
 		],
 	},
+	images: {
+		table: "expo_images",
+		columns: [
+			{ camel: "filename", snake: "filename", type: "text" },
+			{ camel: "mimeType", snake: "mime_type", type: "text" },
+			{ camel: "width", snake: "width", type: "integer" },
+			{ camel: "height", snake: "height", type: "integer" },
+			{ camel: "size", snake: "size", type: "integer" },
+			{ camel: "remoteKey", snake: "remote_key", type: "text" },
+			{ camel: "remoteUrl", snake: "remote_url", type: "text" },
+		],
+	},
 }
 
 export function getEntity(name: string): SyncEntity | null {
