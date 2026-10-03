@@ -2,11 +2,15 @@ import {
 	createUploadthing,
 	type FileRouter,
 	UploadThingError,
+	UTApi,
 } from "uploadthing/server"
 import { getSessionUser, isAuthorized } from "./auth.js"
 import { ensureSchema } from "./db.js"
 
 const f = createUploadthing()
+
+/** Cliente server-side de UploadThing (borrar/listar archivos). */
+export const utapi = new UTApi()
 
 /**
  * FileRouter de UploadThing.

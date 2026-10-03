@@ -12,6 +12,11 @@ export type SyncEntity = {
 	/** Tabla en Neon (ya incluye el prefijo `expo_`). */
 	table: string
 	columns: SyncColumn[]
+	/**
+	 * Columna que guarda el `fileKey` remoto (UploadThing). Si está presente, al
+	 * borrar un registro se elimina también su binario.
+	 */
+	remoteKeyColumn?: string
 }
 
 /**
@@ -68,6 +73,7 @@ export const SYNC_ENTITIES: Record<string, SyncEntity> = {
 	},
 	images: {
 		table: "expo_images",
+		remoteKeyColumn: "remote_key",
 		columns: [
 			{ camel: "filename", snake: "filename", type: "text" },
 			{ camel: "mimeType", snake: "mime_type", type: "text" },

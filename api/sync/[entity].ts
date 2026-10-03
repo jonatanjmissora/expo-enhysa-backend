@@ -7,6 +7,7 @@ import {
 	coerceValue,
 	getEntity,
 } from "../../lib/sync-entities.js"
+import { utapi } from "../../lib/uploadthing.js"
 
 /** Retención de tombstones (días) para el cron. */
 const RETENTION_DAYS = 30
@@ -88,6 +89,26 @@ async function handleDeleteAll(
 	res.status(200).json({ ok: true, deleted: deleted.length })
 }
 
+/** Devuelve los `remote_key` de los registros a borrar (para limpiar UploadThing). */
+async function fetchRemoteKeys(
+	sql: Sql,
+	entity: SyncEntity,
+	userId: string,
+	ids: string[]
+): Promise<string[]> {
+	const column = entity.remoteKeyColumn
+	if (!column || ids.length === 0) return []
+
+	const placeholders = ids.map((_, i) => `$${i + 2}`).join(", ")
+	const rows = (await sql(
+		`SELECT ${column} AS key FROM ${entity.table}
+		 WHERE id IN (${placeholders}) AND user_id = $1 AND ${column} IS NOT NULL`,
+		[userId, ...ids]
+	)) as { key: string }[]
+
+	return rows.map(row => row.key)
+}
+
 async function handleSync(
 	sql: Sql,
 	entity: SyncEntity,
@@ -158,6 +179,18 @@ async function handleSync(
 
 	if (queries.length > 0) {
 		await sql.transaction(queries)
+	}
+
+	// Si la entidad tiene binario remoto (UploadThing), borrarlo al hacer soft delete.
+	if (entity.remoteKeyColumn && deletes.length > 0) {
+		const keys = await fetchRemoteKeys(sql, entity, userId, deletes)
+		if (keys.length > 0) {
+			try {
+				await utapi.deleteFiles(keys)
+			} catch (e) {
+				console.warn("[sync] no se pudieron borrar los binarios remotos:", e)
+			}
+		}
 	}
 
 	res.status(200).json({ ok: true, synced: queries.length })
