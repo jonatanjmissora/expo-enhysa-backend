@@ -111,3 +111,77 @@ CREATE TABLE IF NOT EXISTS expo_images (
 
 CREATE INDEX IF NOT EXISTS idx_expo_images_user
 	ON expo_images (user_id);
+
+-- 8. Informes de iluminación
+CREATE TABLE IF NOT EXISTS expo_informes_iluminacion (
+	id                     TEXT PRIMARY KEY,
+	user_id                UUID NOT NULL,
+	title                  TEXT,
+	empresa_id             TEXT,
+	instrumento_id         TEXT,
+	estado                 TEXT,
+	humedad                TEXT,
+	temperatura            TEXT,
+	tecnico_snapshot       TEXT,
+	empresa_snapshot       TEXT,
+	instrumento_snapshot   TEXT,
+	created_at             TIMESTAMPTZ,
+	observacion            TEXT,
+	conclusion             TEXT,
+	recomendacion          TEXT,
+	finished_at            TEXT,
+	credit_consumed        INTEGER,
+	credit_consumed_at     TEXT,
+	deleted_at             TIMESTAMPTZ,
+	updated_at             TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_expo_informes_user
+	ON expo_informes_iluminacion (user_id);
+
+-- 9. Áreas de iluminación
+CREATE TABLE IF NOT EXISTS expo_areas_iluminacion (
+	id                   TEXT PRIMARY KEY,
+	user_id              UUID NOT NULL,
+	report_id            TEXT,
+	nombre               TEXT,
+	tipo                 TEXT,
+	iluminacion_tipo     TEXT,
+	iluminacion_fuente   TEXT,
+	iluminacion          TEXT,
+	valor_requerido      TEXT,
+	observaciones        TEXT,
+	largo                REAL,
+	ancho                REAL,
+	alto                 REAL,
+	imagenes             TEXT,
+	puntos               TEXT,
+	timestamps           TEXT,
+	deleted_at           TIMESTAMPTZ,
+	updated_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_expo_areas_user
+	ON expo_areas_iluminacion (user_id);
+
+-- 10. Localizadas de iluminación
+CREATE TABLE IF NOT EXISTS expo_localizadas_iluminacion (
+	id                   TEXT PRIMARY KEY,
+	user_id              UUID NOT NULL,
+	report_id            TEXT,
+	nombre               TEXT,
+	tipo                 TEXT,
+	iluminacion_tipo     TEXT,
+	iluminacion_fuente   TEXT,
+	iluminacion          TEXT,
+	valor_requerido      TEXT,
+	observaciones        TEXT,
+	imagenes             TEXT,
+	valor                INTEGER,
+	timestamps           TEXT,
+	deleted_at           TIMESTAMPTZ,
+	updated_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_expo_localizadas_user
+	ON expo_localizadas_iluminacion (user_id);
