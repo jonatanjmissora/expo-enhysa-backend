@@ -79,10 +79,14 @@ async function handleDeleteAll(
 	sql: Sql,
 	entity: SyncEntity,
 	userId: string,
-	res: VercelResponse
+	res: VercelResponse,
+	options: { tombstonesOnly?: boolean } = {}
 ) {
+	const where = options.tombstonesOnly
+		? "user_id = $1 AND deleted_at IS NOT NULL"
+		: "user_id = $1"
 	const deleted = (await sql(
-		`DELETE FROM ${entity.table} WHERE user_id = $1 RETURNING id`,
+		`DELETE FROM ${entity.table} WHERE ${where} RETURNING id`,
 		[userId]
 	)) as { id: string }[]
 
@@ -254,7 +258,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 			return
 		}
 		if (req.method === "DELETE") {
-			await handleDeleteAll(sql, entity, user.id, res)
+			await handleDeleteAll(sql, entity, user.id, res, {
+				tombstonesOnly: req.query.purge === "1",
+			})
 			return
 		}
 		await handleSync(
