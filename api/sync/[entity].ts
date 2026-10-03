@@ -182,14 +182,15 @@ async function handleSync(
 	}
 
 	// Si la entidad tiene binario remoto (UploadThing), borrarlo al hacer soft delete.
+	// Best-effort: NUNCA debe trabar la limpieza de la cola del cliente.
 	if (entity.remoteKeyColumn && deletes.length > 0) {
-		const keys = await fetchRemoteKeys(sql, entity, userId, deletes)
-		if (keys.length > 0) {
-			try {
+		try {
+			const keys = await fetchRemoteKeys(sql, entity, userId, deletes)
+			if (keys.length > 0) {
 				await utapi.deleteFiles(keys)
-			} catch (e) {
-				console.warn("[sync] no se pudieron borrar los binarios remotos:", e)
 			}
+		} catch (e) {
+			console.error("[sync] no se pudieron borrar los binarios remotos:", e)
 		}
 	}
 
