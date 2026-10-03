@@ -242,6 +242,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 		}
 
 		if (req.method === "GET") {
+			// Acción de URL firmada (archivos privados en UploadThing).
+			const sign = req.query.sign
+			if (entity.remoteKeyColumn && typeof sign === "string" && sign) {
+				const { ufsUrl } = await utapi.generateSignedURL(sign)
+				res.status(200).json({ url: ufsUrl })
+				return
+			}
 			await handleGet(sql, entity, user.id, res)
 			return
 		}
