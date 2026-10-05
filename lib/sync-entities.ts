@@ -90,6 +90,7 @@ export const SYNC_ENTITIES: Record<string, SyncEntity> = {
 			{ camel: "title", snake: "title", type: "text" },
 			{ camel: "empresaId", snake: "empresa_id", type: "text" },
 			{ camel: "instrumentoId", snake: "instrumento_id", type: "text" },
+			{ camel: "tecnicoId", snake: "tecnico_id", type: "text" },
 			{ camel: "estado", snake: "estado", type: "text" },
 			{ camel: "humedad", snake: "humedad", type: "text" },
 			{ camel: "temperatura", snake: "temperatura", type: "text" },

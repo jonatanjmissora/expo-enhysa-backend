@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS expo_informes_iluminacion (
 	title                  TEXT,
 	empresa_id             TEXT,
 	instrumento_id         TEXT,
+	tecnico_id             TEXT,
 	estado                 TEXT,
 	humedad                TEXT,
 	temperatura            TEXT,
