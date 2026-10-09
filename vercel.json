@@ -1,10 +1,12 @@
 {
 	"rewrites": [
 		{ "source": "/health", "destination": "/api/health" },
-		{ "source": "/register", "destination": "/api/register" },
-		{ "source": "/login", "destination": "/api/login" },
-		{ "source": "/logout", "destination": "/api/logout" },
-		{ "source": "/me", "destination": "/api/me" },
+		{ "source": "/register", "destination": "/api/auth/register" },
+		{ "source": "/login", "destination": "/api/auth/login" },
+		{ "source": "/logout", "destination": "/api/auth/logout" },
+		{ "source": "/me", "destination": "/api/auth/me" },
+		{ "source": "/password/forgot", "destination": "/api/auth/password/forgot" },
+		{ "source": "/password/reset", "destination": "/api/auth/password/reset" },
 		{ "source": "/preference", "destination": "/api/preference" },
 		{ "source": "/webhook", "destination": "/api/webhook" },
 		{ "source": "/credits", "destination": "/api/credits" },

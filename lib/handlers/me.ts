@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { getSessionToken, getSessionUser, isAuthorized } from "../lib/auth.js"
-import { ensureSchema, getSql } from "../lib/db.js"
+import { getSessionToken, getSessionUser, isAuthorized } from "../auth.js"
+import { ensureSchema, getSql } from "../db.js"
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export async function meHandler(req: VercelRequest, res: VercelResponse) {
 	if (!isAuthorized(req.headers.authorization)) {
 		res.status(401).json({ error: "unauthorized" })
 		return

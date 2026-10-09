@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { createSession, isAuthorized } from "../lib/auth.js"
-import { ensureSchema, getSql } from "../lib/db.js"
-import { hashPassword } from "../lib/password.js"
+import { createSession, isAuthorized } from "../auth.js"
+import { ensureSchema, getSql } from "../db.js"
+import { hashPassword } from "../password.js"
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export async function registerHandler(req: VercelRequest, res: VercelResponse) {
 	if (req.method !== "POST") {
 		res.status(405).json({ error: "method_not_allowed" })
 		return
