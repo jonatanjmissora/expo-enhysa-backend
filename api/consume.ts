@@ -19,8 +19,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 		return
 	}
 
-	const body = (req.body ?? {}) as { reportId?: unknown }
+	const body = (req.body ?? {}) as {
+		reportId?: unknown
+		cost?: unknown
+		kind?: unknown
+	}
 	const reportId = typeof body.reportId === "string" ? body.reportId : ""
+	const kind = body.kind === "checklist" ? "checklist" : "report"
+	const parsedCost =
+		typeof body.cost === "number" ? body.cost : Number(body.cost)
+	const cost =
+		Number.isFinite(parsedCost) && parsedCost > 0
+			? Math.round(parsedCost * 100) / 100
+			: 1
 
 	if (!reportId) {
 		res.status(400).json({ error: "reportId requerido" })
@@ -37,14 +48,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 		const sql = getSql()
 		const now = new Date().toISOString()
-		const id = `consume-${reportId}`
+		const id =
+			kind === "checklist"
+				? `consume-checklist-${reportId}`
+				: `consume-${reportId}`
 
 		const balanceRow = await sql`
 			SELECT credits FROM expo_user_credits WHERE user_id = ${user.id}
 		`
-		const currentCredits = (balanceRow[0]?.credits as number | undefined) ?? 0
+		const currentCredits = Number(balanceRow[0]?.credits ?? 0)
 
-		if (currentCredits < 1) {
+		if (currentCredits < cost) {
 			res.status(400).json({ error: "sin créditos suficientes" })
 			return
 		}
@@ -53,7 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 			INSERT INTO expo_credit_history (
 				id, user_id, type, credits, report_id, payment_id, created_at
 			)
-			VALUES (${id}, ${user.id}, 'consume', -1, ${reportId}, NULL, ${now})
+			VALUES (${id}, ${user.id}, 'consume', ${-cost}, ${reportId}, NULL, ${now})
 			ON CONFLICT (id) DO NOTHING
 			RETURNING id
 		`
@@ -63,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 				SELECT credits FROM expo_user_credits WHERE user_id = ${user.id}
 			`
 			res.status(200).json({
-				credits: (row[0]?.credits as number | undefined) ?? 0,
+				credits: Number(row[0]?.credits ?? 0),
 				alreadyConsumed: true,
 			})
 			return
@@ -71,13 +85,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 		const updated = await sql`
 			UPDATE expo_user_credits
-			SET credits = credits - 1, updated_at = ${now}
+			SET credits = credits - ${cost}, updated_at = ${now}
 			WHERE user_id = ${user.id}
 			RETURNING credits
 		`
 
 		res.status(200).json({
-			credits: (updated[0]?.credits as number | undefined) ?? 0,
+			credits: Number(updated[0]?.credits ?? 0),
 			alreadyConsumed: false,
 		})
 	} catch (e) {

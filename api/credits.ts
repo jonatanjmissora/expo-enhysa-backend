@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 		const rows = await sql`
 			SELECT credits FROM expo_user_credits WHERE user_id = ${user.id}
 		`
-		const credits = (rows[0]?.credits as number | undefined) ?? 0
+		const credits = Number(rows[0]?.credits ?? 0)
 
 		res.status(200).json({ credits })
 	} catch (e) {
