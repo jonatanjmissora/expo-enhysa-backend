@@ -14,8 +14,24 @@ import { registerHandler } from "../../lib/handlers/register.js"
  * Las URL públicas se mantienen mapeadas en `vercel.json`.
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-	const raw = req.query.action
-	const action = (Array.isArray(raw) ? raw : raw ? [raw] : []).join("/")
+	// En Vercel Functions (no Next.js) los segmentos dinámicos no siempre
+	// llegan en req.query; los sacamos también del path.
+	const query = req.query as Record<string, string | string[] | undefined>
+	const raw = query.action ?? query["...action"]
+	const queryAction = Array.isArray(raw) ? raw.join("/") : raw
+
+	const pathname = new URL(req.url ?? "/", "http://localhost").pathname
+	const pathAction = decodeURIComponent(
+		pathname
+			.replace(/^\/api\/auth\/?/, "")
+			.replace(/^\/+/, "")
+			.replace(/\/+$/, "")
+	)
+
+	const action = (queryAction || pathAction).toString()
+
+	// TEMPORAL: para diagnosticar el routing en los logs de Vercel.
+	console.error("[auth] route:", { url: req.url, query: req.query, action })
 
 	switch (action) {
 		case "login":
