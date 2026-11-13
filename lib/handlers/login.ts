@@ -62,9 +62,6 @@ export async function loginHandler(req: VercelRequest, res: VercelResponse) {
 		}
 
 		if (!response.ok) {
-			// TEMPORAL: visible en los logs de Vercel.
-			console.error("[login] web auth error:", response.status, data)
-
 			if (response.status === 401) {
 				res.status(401).json({ error: "invalid_password" })
 				return
@@ -75,8 +72,6 @@ export async function loginHandler(req: VercelRequest, res: VercelResponse) {
 
 		const token = data.token ?? response.headers.get("set-auth-token")
 		if (!token || !data.user) {
-			// TEMPORAL: visible en los logs de Vercel.
-			console.error("[login] respuesta sin token/user:", data)
 			res.status(500).json({ error: "server_error" })
 			return
 		}

@@ -30,9 +30,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
 	const action = (queryAction || pathAction).toString()
 
-	// TEMPORAL: para diagnosticar el routing en los logs de Vercel.
-	console.error("[auth] route:", { url: req.url, query: req.query, action })
-
 	switch (action) {
 		case "login":
 			return loginHandler(req, res)

@@ -27,16 +27,33 @@ function getEntityName(req: VercelRequest): string {
 async function purgeTombstones(sql: Sql): Promise<number> {
 	let purged = 0
 	for (const entity of Object.values(SYNC_ENTITIES)) {
+		const returning = entity.remoteKeyColumn
+			? `id, ${entity.remoteKeyColumn} AS remote_key`
+			: "id"
 		const rows = (await sql(
 			`
 				DELETE FROM ${entity.table}
 				WHERE deleted_at IS NOT NULL
 				  AND deleted_at < now() - make_interval(days => $1)
-				RETURNING id
+				RETURNING ${returning}
 			`,
 			[RETENTION_DAYS]
-		)) as { id: string }[]
+		)) as { id: string; remote_key?: string | null }[]
 		purged += rows.length
+
+		// El binario se borra recién en el purge real, nunca en el soft delete.
+		if (entity.remoteKeyColumn) {
+			const keys = rows
+				.map(row => row.remote_key)
+				.filter((key): key is string => typeof key === "string" && !!key)
+			for (let i = 0; i < keys.length; i += 100) {
+				try {
+					await utapi.deleteFiles(keys.slice(i, i + 100))
+				} catch (e) {
+					console.error("[sync] no se pudieron borrar binarios del purge:", e)
+				}
+			}
+		}
 	}
 	return purged
 }
@@ -91,26 +108,6 @@ async function handleDeleteAll(
 	)) as { id: string }[]
 
 	res.status(200).json({ ok: true, deleted: deleted.length })
-}
-
-/** Devuelve los `remote_key` de los registros a borrar (para limpiar UploadThing). */
-async function fetchRemoteKeys(
-	sql: Sql,
-	entity: SyncEntity,
-	userId: string,
-	ids: string[]
-): Promise<string[]> {
-	const column = entity.remoteKeyColumn
-	if (!column || ids.length === 0) return []
-
-	const placeholders = ids.map((_, i) => `$${i + 2}`).join(", ")
-	const rows = (await sql(
-		`SELECT ${column} AS key FROM ${entity.table}
-		 WHERE id IN (${placeholders}) AND user_id = $1 AND ${column} IS NOT NULL`,
-		[userId, ...ids]
-	)) as { key: string }[]
-
-	return rows.map(row => row.key)
 }
 
 async function handleSync(
@@ -185,18 +182,8 @@ async function handleSync(
 		await sql.transaction(queries)
 	}
 
-	// Si la entidad tiene binario remoto (UploadThing), borrarlo al hacer soft delete.
-	// Best-effort: NUNCA debe trabar la limpieza de la cola del cliente.
-	if (entity.remoteKeyColumn && deletes.length > 0) {
-		try {
-			const keys = await fetchRemoteKeys(sql, entity, userId, deletes)
-			if (keys.length > 0) {
-				await utapi.deleteFiles(keys)
-			}
-		} catch (e) {
-			console.error("[sync] no se pudieron borrar los binarios remotos:", e)
-		}
-	}
+	// El binario remoto NO se borra en soft delete: se conserva hasta el purge
+	// real de tombstones (RETENTION_DAYS). UploadThing no tiene papelera.
 
 	res.status(200).json({ ok: true, synced: queries.length })
 }

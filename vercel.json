@@ -13,7 +13,8 @@
 		{ "source": "/credit-history", "destination": "/api/credit-history" },
 		{ "source": "/consume", "destination": "/api/consume" },
 		{ "source": "/sync/:entity", "destination": "/api/sync/:entity" },
-		{ "source": "/uploadthing", "destination": "/api/uploadthing" }
+		{ "source": "/uploadthing", "destination": "/api/uploadthing" },
+		{ "source": "/images-health", "destination": "/api/images-health" }
 	],
 	"crons": [
 		{ "path": "/api/sync/tecnicos", "schedule": "0 3 * * 1" }
