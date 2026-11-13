@@ -1,7 +1,17 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { createSession, isAuthorized } from "../auth.js"
-import { ensureSchema, getSql } from "../db.js"
-import { hashPassword } from "../password.js"
+import { isAuthorized } from "../auth.js"
+import { webAuthFetch, type WebAuthUser } from "../web-auth.js"
+
+const DEMO_DOMAIN = "@enhysa.demo"
+
+function mapUser(user: WebAuthUser) {
+	return {
+		id: user.id,
+		email: user.email,
+		name: user.name,
+		userImage: user.image,
+	}
+}
 
 export async function registerHandler(req: VercelRequest, res: VercelResponse) {
 	if (req.method !== "POST") {
@@ -30,35 +40,45 @@ export async function registerHandler(req: VercelRequest, res: VercelResponse) {
 		return
 	}
 
-	try {
-		await ensureSchema()
-		const sql = getSql()
+	if (email.endsWith(DEMO_DOMAIN)) {
+		res.status(403).json({ error: "demo_not_allowed" })
+		return
+	}
 
-		const existing = await sql`
-			SELECT id FROM expo_users WHERE email = ${email} LIMIT 1
-		`
-		if (existing.length > 0) {
-			res.status(409).json({ error: "email_exists" })
+	try {
+		const response = await webAuthFetch("/api/auth/sign-up/email", {
+			method: "POST",
+			body: JSON.stringify({ email, password, name: name ?? "" }),
+		})
+
+		const data = (await response.json().catch(() => ({}))) as {
+			token?: string
+			user?: WebAuthUser
+			code?: string
+		}
+
+		if (!response.ok) {
+			if (
+				response.status === 422 ||
+				data.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL" ||
+				data.code === "USER_ALREADY_EXISTS"
+			) {
+				res.status(409).json({ error: "email_exists" })
+				return
+			}
+			res.status(response.status).json({ error: data.code ?? "invalid_input" })
 			return
 		}
 
-		const passwordHash = await hashPassword(password)
-		const rows = await sql`
-			INSERT INTO expo_users (email, password_hash, name)
-			VALUES (${email}, ${passwordHash}, ${name})
-			RETURNING id, email, name, user_image
-		`
-		const user = rows[0]
-		const token = await createSession(user.id)
+		const token = data.token ?? response.headers.get("set-auth-token")
+		if (!token || !data.user) {
+			res.status(500).json({ error: "server_error" })
+			return
+		}
 
 		res.status(200).json({
 			token,
-			user: {
-				id: user.id,
-				email: user.email,
-				name: user.name,
-				userImage: user.user_image,
-			},
+			user: mapUser(data.user),
 		})
 	} catch (error) {
 		console.error("[register] error:", error)

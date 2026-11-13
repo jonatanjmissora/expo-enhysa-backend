@@ -1,7 +1,18 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { createSession, isAuthorized } from "../auth.js"
-import { ensureSchema, getSql } from "../db.js"
-import { verifyPassword } from "../password.js"
+import { isAuthorized } from "../auth.js"
+import { getSql } from "../db.js"
+import { webAuthFetch, type WebAuthUser } from "../web-auth.js"
+
+const DEMO_DOMAIN = "@enhysa.demo"
+
+function mapUser(user: WebAuthUser) {
+	return {
+		id: user.id,
+		email: user.email,
+		name: user.name,
+		userImage: user.image,
+	}
+}
 
 export async function loginHandler(req: VercelRequest, res: VercelResponse) {
 	if (req.method !== "POST") {
@@ -24,38 +35,50 @@ export async function loginHandler(req: VercelRequest, res: VercelResponse) {
 		return
 	}
 
-	try {
-		await ensureSchema()
-		const sql = getSql()
+	if (email.endsWith(DEMO_DOMAIN)) {
+		res.status(403).json({ error: "demo_not_allowed" })
+		return
+	}
 
+	try {
+		const sql = getSql()
 		const rows = await sql`
-			SELECT id, email, name, user_image, password_hash
-			FROM expo_users
-			WHERE email = ${email}
-			LIMIT 1
+			SELECT id FROM expo_users WHERE lower(email) = ${email} LIMIT 1
 		`
-		const user = rows[0]
-		if (!user) {
+		if (rows.length === 0) {
 			res.status(404).json({ error: "email_not_found" })
 			return
 		}
 
-		const valid = await verifyPassword(password, user.password_hash)
-		if (!valid) {
-			res.status(401).json({ error: "invalid_password" })
+		const response = await webAuthFetch("/api/auth/sign-in/email", {
+			method: "POST",
+			body: JSON.stringify({ email, password }),
+		})
+
+		const data = (await response.json().catch(() => ({}))) as {
+			token?: string
+			user?: WebAuthUser
+			code?: string
+		}
+
+		if (!response.ok) {
+			if (response.status === 401) {
+				res.status(401).json({ error: "invalid_password" })
+				return
+			}
+			res.status(response.status).json({ error: data.code ?? "invalid_input" })
 			return
 		}
 
-		const token = await createSession(user.id)
+		const token = data.token ?? response.headers.get("set-auth-token")
+		if (!token || !data.user) {
+			res.status(500).json({ error: "server_error" })
+			return
+		}
 
 		res.status(200).json({
 			token,
-			user: {
-				id: user.id,
-				email: user.email,
-				name: user.name,
-				userImage: user.user_image,
-			},
+			user: mapUser(data.user),
 		})
 	} catch (error) {
 		console.error("[login] error:", error)

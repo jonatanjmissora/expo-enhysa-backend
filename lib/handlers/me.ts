@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { getSessionToken, getSessionUser, isAuthorized } from "../auth.js"
-import { ensureSchema, getSql } from "../db.js"
+import { getSessionToken, isAuthorized } from "../auth.js"
+import { getSql } from "../db.js"
+import { getWebSession } from "../web-auth.js"
 
 export async function meHandler(req: VercelRequest, res: VercelResponse) {
 	if (!isAuthorized(req.headers.authorization)) {
@@ -15,9 +16,8 @@ export async function meHandler(req: VercelRequest, res: VercelResponse) {
 	}
 
 	try {
-		await ensureSchema()
-		const user = await getSessionUser(token)
-		if (!user) {
+		const session = await getWebSession(token)
+		if (!session) {
 			res.status(401).json({ error: "invalid_session" })
 			return
 		}
@@ -32,7 +32,7 @@ export async function meHandler(req: VercelRequest, res: VercelResponse) {
 			const rows = await sql`
 				UPDATE expo_users
 				SET name = ${name}, user_image = ${userImage}, updated_at = now()
-				WHERE id = ${user.id}
+				WHERE id = ${session.user.id}::uuid
 				RETURNING id, email, name, user_image
 			`
 			const updated = rows[0]
@@ -50,10 +50,10 @@ export async function meHandler(req: VercelRequest, res: VercelResponse) {
 
 		res.status(200).json({
 			user: {
-				id: user.id,
-				email: user.email,
-				name: user.name,
-				userImage: user.user_image,
+				id: session.user.id,
+				email: session.user.email,
+				name: session.user.name,
+				userImage: session.user.image,
 			},
 		})
 	} catch (error) {

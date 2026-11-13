@@ -1,8 +1,5 @@
-import { randomBytes } from "node:crypto"
 import type { VercelRequest } from "@vercel/node"
-import { getSql } from "./db.js"
-
-const SESSION_DAYS = 30
+import { getWebSession } from "./web-auth.js"
 
 export type SessionUser = {
 	id: string
@@ -25,36 +22,16 @@ export function getSessionToken(req: VercelRequest): string | null {
 	return token?.trim() || null
 }
 
-export async function createSession(userId: string): Promise<string> {
-	const sql = getSql()
-	const token = randomBytes(32).toString("hex")
-	const expiresAt = new Date(
-		Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000
-	).toISOString()
-
-	await sql`
-		INSERT INTO expo_sessions (token, user_id, expires_at)
-		VALUES (${token}, ${userId}, ${expiresAt})
-	`
-
-	return token
-}
-
 export async function getSessionUser(
 	token: string
 ): Promise<SessionUser | null> {
-	const sql = getSql()
-	const rows = await sql`
-		SELECT u.id, u.email, u.name, u.user_image
-		FROM expo_sessions s
-		JOIN expo_users u ON u.id = s.user_id
-		WHERE s.token = ${token} AND s.expires_at > now()
-		LIMIT 1
-	`
-	return (rows[0] as SessionUser | undefined) ?? null
-}
+	const session = await getWebSession(token)
+	if (!session) return null
 
-export async function deleteSession(token: string): Promise<void> {
-	const sql = getSql()
-	await sql`DELETE FROM expo_sessions WHERE token = ${token}`
+	return {
+		id: session.user.id,
+		email: session.user.email,
+		name: session.user.name,
+		user_image: session.user.image,
+	}
 }

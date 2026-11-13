@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node"
-import { deleteSession, getSessionToken, isAuthorized } from "../auth.js"
-import { ensureSchema } from "../db.js"
+import { getSessionToken, isAuthorized } from "../auth.js"
+import { webAuthFetch } from "../web-auth.js"
 
 export async function logoutHandler(req: VercelRequest, res: VercelResponse) {
 	if (req.method !== "POST") {
@@ -19,8 +19,12 @@ export async function logoutHandler(req: VercelRequest, res: VercelResponse) {
 	}
 
 	try {
-		await ensureSchema()
-		await deleteSession(token)
+		await webAuthFetch("/api/auth/sign-out", {
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		})
 		res.status(200).json({ ok: true })
 	} catch (error) {
 		console.error("[logout] error:", error)
